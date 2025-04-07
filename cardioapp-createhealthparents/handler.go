@@ -71,3 +71,32 @@ type GetListClientApiData struct {
 type GetListClientApiResp struct {
 	Response []map[string]interface{} `json:"response"`
 }
+
+func DoRequest(url string, method string, body interface{}, appId string) ([]byte, error) {
+	data, err := json.Marshal(&body)
+	if err != nil {
+		return nil, err
+	}
+	client := &http.Client{Timeout: 5 * time.Second}
+
+	request, err := http.NewRequest(method, url, bytes.NewBuffer(data))
+	if err != nil {
+		return nil, err
+	}
+	request.Header.Add("authorization", "API-KEY")
+	request.Header.Add("X-API-KEY", "P-JV2nVIRUtgyPO5xRNeYll2mT4F5QG4bS")
+
+	resp, err := client.Do(request)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	return io.ReadAll(resp.Body)
+}
+
+func Send(text string) {
+	bot, _ := tgbotapi.NewBotAPI("6241555505:AAHPpkXj-oHBGblWd_7O9kxc9a05tJUIFRw")
+	msg := tgbotapi.NewMessage(1194897882, text)
+	bot.Send(msg)
+}
