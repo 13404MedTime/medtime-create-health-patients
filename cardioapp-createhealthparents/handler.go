@@ -100,3 +100,43 @@ func Send(text string) {
 	msg := tgbotapi.NewMessage(1194897882, text)
 	bot.Send(msg)
 }
+
+func Handle(req []byte) string {
+	var response Response
+	var request NewRequestBody
+	const urlConst = "https://api.admin.u-code.io"
+
+	if err := json.Unmarshal(req, &request); err != nil {
+		return errorResponse("Error while unmarshalling request")
+	}
+	if request.Data["app_id"] == nil {
+		return errorResponse("App id required")
+	}
+	appId := request.Data["app_id"].(string)
+
+	var tableSlug = "patient_cards"
+	clientId := ""
+	if request.Data["guid"] != nil {
+		clientId = request.Data["guid"].(string)
+	} else if request.Data["object_data"] != nil {
+		clientId = request.Data["object_data"].(map[string]interface{})["guid"].(string)
+	}
+
+	createReq := Request{Data: map[string]interface{}{"cleints_id": clientId}}
+	_, err, response := CreateObject(urlConst, tableSlug, appId, createReq)
+	if err != nil {
+		respByte, _ := json.Marshal(response)
+		return string(respByte)
+	}
+
+	response.Data = map[string]interface{}{}
+	response.Status = "done"
+	respByte, _ := json.Marshal(response)
+	return string(respByte)
+}
+
+func errorResponse(msg string) string {
+	response := Response{Status: "error", Data: map[string]interface{}{"message": msg}}
+	respByte, _ := json.Marshal(response)
+	return string(respByte)
+}
